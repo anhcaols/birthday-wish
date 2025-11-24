@@ -123,7 +123,8 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
       context.shadowColor = '#FF2D5C';
       context.shadowBlur = 20;
       context.fillStyle = gradient;
-      context.font = `italic bold ${message.size || 48}px "Brush Script MT", cursive`;
+      // Fixed font size at 72px for better readability
+      context.font = `italic bold 48px "Brush Script MT", cursive`;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText(message.text, canvas.width / 2, canvas.height / 2);
@@ -136,7 +137,8 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
       });
 
       const sprite = new THREE.Sprite(material);
-      const scale = (message.size || 48) / 20;
+      // Fixed scale for consistent text size
+      const scale = 3.6;
       sprite.scale.set(scale * 8, scale * 2, 1);
 
       sprite.position.set(
@@ -170,49 +172,82 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     // Create floating images with fixed size and object-cover behavior
     const textureLoader = new THREE.TextureLoader();
     
-    // Fixed dimensions for all images
-    const fixedWidth = 6;  // Width in 3D units
+    // Fixed dimensions for all images - increased for better visibility
+    const fixedWidth = 8;  // Width in 3D units
     const fixedHeight = 8; // Height in 3D units
     const targetAspect = fixedWidth / fixedHeight; // Target aspect ratio
+    const borderRadius = 12; // Border radius in pixels
     
     images.forEach((imageSrc, index) => {
-      textureLoader.load(
-        imageSrc,
-        (texture) => {
-          // Get original image dimensions
-          const imgWidth = texture.image.width;
-          const imgHeight = texture.image.height;
-          const imgAspect = imgWidth / imgHeight;
+      // Load image first
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        // Create canvas for rounded corners
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-          // Calculate scale and offset for object-cover effect
-          let scale = { x: 1, y: 1 };
-          let offset = { x: 0, y: 0 };
+        // Set canvas size (use high resolution for better quality)
+        const canvasSize = 1024;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+        const imgAspect = imgWidth / imgHeight;
 
-          if (imgAspect > targetAspect) {
-            // Image is wider than target - scale and crop horizontally
-            scale.x = targetAspect / imgAspect;
-            offset.x = (1 - scale.x) / 2;
-          } else {
-            // Image is taller than target - scale and crop vertically
-            scale.y = imgAspect / targetAspect;
-            offset.y = (1 - scale.y) / 2;
-          }
+        // Calculate scale and offset for object-cover effect
+        let drawWidth = canvasSize;
+        let drawHeight = canvasSize;
+        let drawX = 0;
+        let drawY = 0;
 
-          // Apply texture transformations for cover effect
-          texture.repeat.set(scale.x, scale.y);
-          texture.offset.set(offset.x, offset.y);
-          texture.center.set(0.5, 0.5);
+        if (imgAspect > targetAspect) {
+          // Image is wider than target - scale and crop horizontally
+          drawWidth = canvasSize * (imgAspect / targetAspect);
+          drawX = (canvasSize - drawWidth) / 2;
+        } else {
+          // Image is taller than target - scale and crop vertically
+          drawHeight = canvasSize * (targetAspect / imgAspect);
+          drawY = (canvasSize - drawHeight) / 2;
+        }
 
-          const material = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true,
-            opacity: 0.9,
-          });
+        // Scale border radius proportionally to canvas size
+        // Border radius 12px on a typical 512px image = 24px on 1024px canvas
+        const r = (borderRadius * canvasSize) / 512;
+        
+        // Draw rounded rectangle path
+        ctx.beginPath();
+        ctx.moveTo(r, 0);
+        ctx.lineTo(canvasSize - r, 0);
+        ctx.quadraticCurveTo(canvasSize, 0, canvasSize, r);
+        ctx.lineTo(canvasSize, canvasSize - r);
+        ctx.quadraticCurveTo(canvasSize, canvasSize, canvasSize - r, canvasSize);
+        ctx.lineTo(r, canvasSize);
+        ctx.quadraticCurveTo(0, canvasSize, 0, canvasSize - r);
+        ctx.lineTo(0, r);
+        ctx.quadraticCurveTo(0, 0, r, 0);
+        ctx.closePath();
+        ctx.clip();
 
-          const sprite = new THREE.Sprite(material);
-          
-          // Apply fixed dimensions
-          sprite.scale.set(fixedWidth, fixedHeight, 1);
+        // Draw image with cover effect
+        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+
+        // Create texture from canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+
+        const material = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          opacity: 0.9,
+        });
+
+        const sprite = new THREE.Sprite(material);
+        
+        // Apply fixed dimensions
+        sprite.scale.set(fixedWidth, fixedHeight, 1);
 
           // Random starting position
           sprite.position.set(
@@ -241,13 +276,13 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
             swingOffset: Math.random() * Math.PI * 2,
             swingSpeed: 0.4 + Math.random() * 0.4,
           });
-
-        },
-        undefined,
-        (error) => {
-          console.error(`❌ Error loading image ${imageSrc}:`, error);
-        }
-      );
+      };
+      
+      img.onerror = (error) => {
+        console.error(`❌ Error loading image ${imageSrc}:`, error);
+      };
+      
+      img.src = imageSrc;
     });
 
     // Create hearts
