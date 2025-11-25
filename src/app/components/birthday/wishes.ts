@@ -1,5 +1,6 @@
 export const birthdayWishes = [
   { text: 'I love you ❤️', size: 56 },
+  { text: 'Happy Birthday my love! 🎂', size: 42 },
   { text: 'You are my universe', size: 48 },
   { text: 'Thank you for being my sunshine', size: 44 },
   { text: 'Honey bunch, you are my everything', size: 46 },
@@ -14,7 +15,6 @@ export const birthdayWishes = [
   { text: 'Together forever 💕', size: 46 },
   { text: '05/12/2002 💖', size: 52 },
   { text: 'My love 05/12/2002', size: 52 },
-  { text: 'My love for you is endless', size: 42 },
   { text: 'You light up my world', size: 48 },
   { text: 'Forever yours', size: 50 },
   { text: 'You mean everything to me', size: 44 },
