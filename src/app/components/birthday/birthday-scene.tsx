@@ -268,7 +268,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
 
         // Draw text below heart
         ctx.save();
-        ctx.font = 'italic bold 24px "Brush Script MT", cursive';
+        ctx.font = 'italic bold 24px Georgia, "Times New Roman", serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -334,7 +334,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
       context.shadowBlur = 20;
       context.fillStyle = gradient;
       // Fixed font size at 72px for better readability
-      context.font = `italic bold 48px "Brush Script MT", cursive`;
+      context.font = `italic bold 48px Courier New, monospace `;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText(message.text, canvas.width / 2, canvas.height / 2);

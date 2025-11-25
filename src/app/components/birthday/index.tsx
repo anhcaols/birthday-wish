@@ -25,16 +25,16 @@ export default function Birthday() {
     <div className="relative w-full h-screen overflow-hidden">
       <BirthdayScene messages={birthdayWishes} images={photos} />
       <div className="fixed top-0 left-0">
-        <img src="/images/gau-dau-2.webp" alt="Birthday" className="w-24 h-24 object-cover rounded-br-lg" />
+        <img src="/images/gau-dau-2.webp" alt="Birthday" className="w-16 h-16 md:w-24 md:h-24 object-cover rounded-br-lg" />
       </div>
       <div className="fixed top-0 right-0">
-        <img src="/images/gau-dau-3.jpg" alt="Birthday" className="w-24 h-24 object-cover rounded-bl-lg" />
+        <img src="/images/gau-dau-3.jpg" alt="Birthday" className="w-16 h-16 md:w-24 md:h-24 object-cover rounded-bl-lg" />
       </div>
       <div className="fixed bottom-0 left-0">
-        <img src="/images/gau-dau-1.webp" alt="Birthday" className="w-24 h-24 object-cover rounded-tr-lg" />
+        <img src="/images/gau-dau-1.webp" alt="Birthday" className="w-16 h-16 md:w-24 md:h-24 object-cover rounded-tr-lg" />
       </div>
       <div className="fixed bottom-0 right-0">
-        <img src="/images/gau-dau-4.webp" alt="Birthday" className="w-24 h-24 object-cover rounded-tl-lg" />
+        <img src="/images/gau-dau-4.webp" alt="Birthday" className="w-16 h-16 md:w-24 md:h-24 object-cover rounded-tl-lg" />
       </div>
     </div>
   );
