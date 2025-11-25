@@ -268,7 +268,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
 
         // Draw text below heart
         ctx.save();
-        ctx.font = 'italic bold 24px Georgia, "Times New Roman", serif';
+        ctx.font = 'italic bold 24px Courier New, monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -284,7 +284,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         ctx.fillStyle = gradient;
         
         // Draw text below heart (heart center is at height/2, so text at height/2 + 250)
-        ctx.fillText('Thanh Thuý 💝 - My love 05/12/2002 🎂', width / 2, height / 2 + 300);
+        ctx.fillText('Thanh Thuý 💝 - My love 05/12/2002 🎂', width / 2, height / 2 + 280);
         ctx.restore();
 
         heartAnimationIdRef.current = requestAnimationFrame(animateHeart);
