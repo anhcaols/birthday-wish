@@ -189,9 +189,11 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         if (!ctx) return;
 
         // Set canvas size (use high resolution for better quality)
+        // Add padding for shadow effect
+        const padding = 40;
         const canvasSize = 1024;
-        canvas.width = canvasSize;
-        canvas.height = canvasSize;
+        canvas.width = canvasSize + padding * 2;
+        canvas.height = canvasSize + padding * 2;
         
         const imgWidth = img.width;
         const imgHeight = img.height;
@@ -216,23 +218,47 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         // Scale border radius proportionally to canvas size
         // Border radius 12px on a typical 512px image = 24px on 1024px canvas
         const r = (borderRadius * canvasSize) / 512;
+        const shadowBlur = 50; // White shadow blur
         
-        // Draw rounded rectangle path
+        // Draw white shadow/glow effect first (before clipping)
+        ctx.save();
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = shadowBlur;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw rounded rectangle path for shadow
         ctx.beginPath();
-        ctx.moveTo(r, 0);
-        ctx.lineTo(canvasSize - r, 0);
-        ctx.quadraticCurveTo(canvasSize, 0, canvasSize, r);
-        ctx.lineTo(canvasSize, canvasSize - r);
-        ctx.quadraticCurveTo(canvasSize, canvasSize, canvasSize - r, canvasSize);
-        ctx.lineTo(r, canvasSize);
-        ctx.quadraticCurveTo(0, canvasSize, 0, canvasSize - r);
-        ctx.lineTo(0, r);
-        ctx.quadraticCurveTo(0, 0, r, 0);
+        ctx.moveTo(padding + r, padding);
+        ctx.lineTo(padding + canvasSize - r, padding);
+        ctx.quadraticCurveTo(padding + canvasSize, padding, padding + canvasSize, padding + r);
+        ctx.lineTo(padding + canvasSize, padding + canvasSize - r);
+        ctx.quadraticCurveTo(padding + canvasSize, padding + canvasSize, padding + canvasSize - r, padding + canvasSize);
+        ctx.lineTo(padding + r, padding + canvasSize);
+        ctx.quadraticCurveTo(padding, padding + canvasSize, padding, padding + canvasSize - r);
+        ctx.lineTo(padding, padding + r);
+        ctx.quadraticCurveTo(padding, padding, padding + r, padding);
+        ctx.closePath();
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.restore();
+        
+        // Draw rounded rectangle path for clipping image
+        ctx.beginPath();
+        ctx.moveTo(padding + r, padding);
+        ctx.lineTo(padding + canvasSize - r, padding);
+        ctx.quadraticCurveTo(padding + canvasSize, padding, padding + canvasSize, padding + r);
+        ctx.lineTo(padding + canvasSize, padding + canvasSize - r);
+        ctx.quadraticCurveTo(padding + canvasSize, padding + canvasSize, padding + canvasSize - r, padding + canvasSize);
+        ctx.lineTo(padding + r, padding + canvasSize);
+        ctx.quadraticCurveTo(padding, padding + canvasSize, padding, padding + canvasSize - r);
+        ctx.lineTo(padding, padding + r);
+        ctx.quadraticCurveTo(padding, padding, padding + r, padding);
         ctx.closePath();
         ctx.clip();
 
-        // Draw image with cover effect
-        ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        // Draw image with cover effect (adjusted for padding)
+        ctx.drawImage(img, padding + drawX, padding + drawY, drawWidth, drawHeight);
 
         // Create texture from canvas
         const texture = new THREE.CanvasTexture(canvas);
@@ -241,7 +267,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         const material = new THREE.SpriteMaterial({
           map: texture,
           transparent: true,
-          opacity: 0.9,
+          opacity: 1,
         });
 
         const sprite = new THREE.Sprite(material);
