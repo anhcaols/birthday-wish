@@ -65,4 +65,3 @@ export const photos = [
   // '/images/emiu-34.png',
   // '/images/emiu-35.png',
 ];
-

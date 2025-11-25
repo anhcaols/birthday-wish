@@ -20,6 +20,7 @@ interface FallingObject {
   baseVelocity: THREE.Vector3;
   swingOffset: number;
   swingSpeed: number;
+  type?: 'message' | 'image' | 'heart';
 }
 
 export default function BirthdayScene({ messages, images }: BirthdaySceneProps) {
@@ -31,6 +32,10 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
   const mouseRef = useRef({ x: 0, y: 0 });
   const targetCameraRef = useRef({ x: 0, y: 0 });
   const timeRef = useRef(0);
+  const heartModeRef = useRef(false);
+  const heartCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const heartParticlesRef = useRef<any[]>([]);
+  const heartAnimationIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -59,6 +64,9 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    // Ensure renderer is below heart canvas so images are visible
+    (renderer.domElement as HTMLElement).style.position = 'absolute';
+    (renderer.domElement as HTMLElement).style.zIndex = '1';
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -69,7 +77,32 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
       targetCameraRef.current.x = mouseRef.current.x * 5;
       targetCameraRef.current.y = mouseRef.current.y * 5;
     };
+    
+    // Double click to toggle heart mode
+    const handleDoubleClick = () => {
+      heartModeRef.current = !heartModeRef.current;
+      
+      if (heartModeRef.current) {
+        // Enter heart mode - hide messages, show heart animation
+        // Images will still be visible (type !== 'message')
+        initHeartAnimation();
+        startHeartAnimation();
+        console.log('💖 Heart mode activated');
+      } else {
+        // Exit heart mode
+        if (heartAnimationIdRef.current) {
+          cancelAnimationFrame(heartAnimationIdRef.current);
+          heartAnimationIdRef.current = null;
+        }
+        if (heartCanvasRef.current) {
+          heartCanvasRef.current.style.display = 'none';
+        }
+        console.log('✨ Normal mode activated');
+      }
+    };
+    
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('dblclick', handleDoubleClick);
 
     // Add lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -82,6 +115,183 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     const pointLight2 = new THREE.PointLight(0xFF2D5C, 1, 100);
     pointLight2.position.set(-10, -10, 10);
     scene.add(pointLight2);
+
+    // Initialize heart animation canvas (only create once)
+    const initHeartAnimation = () => {
+      if (heartCanvasRef.current) {
+        heartCanvasRef.current.style.display = 'block';
+        return;
+      }
+
+      const heartCanvas = document.createElement('canvas');
+      heartCanvas.id = 'heartCanvas';
+      heartCanvas.style.position = 'absolute';
+      heartCanvas.style.left = '0';
+      heartCanvas.style.top = '0';
+      heartCanvas.style.width = '100%';
+      heartCanvas.style.height = '100%';
+      heartCanvas.style.pointerEvents = 'none';
+      heartCanvas.style.zIndex = '10'; // Above Three.js renderer
+      heartCanvas.style.backgroundColor = 'transparent'; // Don't block images
+      
+      containerRef.current?.appendChild(heartCanvas);
+      heartCanvasRef.current = heartCanvas;
+    };
+
+    // Start heart animation (restart each time)
+    const startHeartAnimation = () => {
+      if (!heartCanvasRef.current) return;
+
+      // Cancel existing animation if any
+      if (heartAnimationIdRef.current) {
+        cancelAnimationFrame(heartAnimationIdRef.current);
+        heartAnimationIdRef.current = null;
+      }
+
+      const heartCanvas = heartCanvasRef.current;
+      const ctx = heartCanvas.getContext('2d');
+      if (!ctx) return;
+
+      const width = heartCanvas.width = window.innerWidth;
+      const height = heartCanvas.height = window.innerHeight;
+
+      // Heart shape function
+      const heartPosition = (rad: number): [number, number] => {
+        return [
+          Math.pow(Math.sin(rad), 3),
+          -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))
+        ];
+      };
+
+      const scaleAndTranslate = (pos: [number, number], sx: number, sy: number, dx: number, dy: number): [number, number] => {
+        return [dx + pos[0] * sx, dy + pos[1] * sy];
+      };
+
+      // Create heart points
+      const pointsOrigin: [number, number][] = [];
+      const dr = 0.1;
+      for (let i = 0; i < Math.PI * 2; i += dr) {
+        pointsOrigin.push(scaleAndTranslate(heartPosition(i), 210, 13, 0, 0));
+      }
+      for (let i = 0; i < Math.PI * 2; i += dr) {
+        pointsOrigin.push(scaleAndTranslate(heartPosition(i), 150, 9, 0, 0));
+      }
+      for (let i = 0; i < Math.PI * 2; i += dr) {
+        pointsOrigin.push(scaleAndTranslate(heartPosition(i), 90, 5, 0, 0));
+      }
+
+      const heartPointsCount = pointsOrigin.length;
+      const targetPoints: [number, number][] = [];
+
+      const pulse = (kx: number, ky: number) => {
+        for (let i = 0; i < pointsOrigin.length; i++) {
+          targetPoints[i] = [
+            kx * pointsOrigin[i][0] + width / 2,
+            ky * pointsOrigin[i][1] + height / 2
+          ];
+        }
+      };
+
+      // Reinitialize particles each time
+      heartParticlesRef.current = [];
+      for (let i = 0; i < heartPointsCount; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        heartParticlesRef.current[i] = {
+          vx: 0,
+          vy: 0,
+          R: 2,
+          speed: Math.random() + 5,
+          q: Math.floor(Math.random() * heartPointsCount),
+          D: 2 * (i % 2) - 1,
+          force: 0.2 * Math.random() + 0.7,
+          f: 'rgba(255, 107, 157, 1)',
+          trace: Array(50).fill(null).map(() => ({ x, y }))
+        };
+      }
+
+      let heartTime = 0;
+      const animateHeart = () => {
+        if (!heartModeRef.current) {
+          heartAnimationIdRef.current = null;
+          return;
+        }
+
+        const n = -Math.cos(heartTime);
+        pulse((1 + n) * 0.5, (1 + n) * 0.5);
+        heartTime += (Math.sin(heartTime) < 0 ? 9 : n > 0.8 ? 0.2 : 1) * 0.01;
+
+        // Clear canvas with transparent background to show images behind
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = heartParticlesRef.current.length; i--;) {
+          const u = heartParticlesRef.current[i];
+          const q = targetPoints[u.q];
+          const dx = u.trace[0].x - q[0];
+          const dy = u.trace[0].y - q[1];
+          const length = Math.sqrt(dx * dx + dy * dy);
+
+          if (10 > length) {
+            if (0.95 < Math.random()) {
+              u.q = Math.floor(Math.random() * heartPointsCount);
+            } else {
+              if (0.99 < Math.random()) {
+                u.D *= -1;
+              }
+              u.q += u.D;
+              u.q %= heartPointsCount;
+              if (0 > u.q) {
+                u.q += heartPointsCount;
+              }
+            }
+          }
+
+          u.vx += (-dx / length) * u.speed;
+          u.vy += (-dy / length) * u.speed;
+          u.trace[0].x += u.vx;
+          u.trace[0].y += u.vy;
+          u.vx *= u.force;
+          u.vy *= u.force;
+
+          for (let k = 0; k < u.trace.length - 1; k++) {
+            const T = u.trace[k];
+            const N = u.trace[k + 1];
+            N.x -= 0.4 * (N.x - T.x);
+            N.y -= 0.4 * (N.y - T.y);
+          }
+
+          ctx.fillStyle = u.f;
+          for (let k = 0; k < u.trace.length; k++) {
+            ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
+          }
+        }
+
+        // Draw text below heart
+        ctx.save();
+        ctx.font = 'italic bold 24px "Brush Script MT", cursive';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Create gradient for text
+        const gradient = ctx.createLinearGradient(width / 2 - 150, height / 2 + 150, width / 2 + 150, height / 2 + 150);
+        gradient.addColorStop(0, '#FF3D6B');
+        gradient.addColorStop(0.5, '#FF2D5C');
+        gradient.addColorStop(1, '#FF3D6B');
+        
+        // Add glow effect
+        ctx.shadowColor = '#FF2D5C';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = gradient;
+        
+        // Draw text below heart (heart center is at height/2, so text at height/2 + 250)
+        ctx.fillText('Thanh Thuý 💝 - My love 05/12/2002 🎂', width / 2, height / 2 + 300);
+        ctx.restore();
+
+        heartAnimationIdRef.current = requestAnimationFrame(animateHeart);
+      };
+
+      animateHeart();
+    };
 
     // Create stars
     const starsGeometry = new THREE.BufferGeometry();
@@ -166,6 +376,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         ),
         swingOffset: Math.random() * Math.PI * 2,
         swingSpeed: 0.5 + Math.random() * 0.5,
+        type: 'message' as any, // Mark as message
       });
     });
 
@@ -301,6 +512,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
             ),
             swingOffset: Math.random() * Math.PI * 2,
             swingSpeed: 0.4 + Math.random() * 0.4,
+            type: 'image' as any, // Mark as image
           });
       };
       
@@ -368,6 +580,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         rotation: new THREE.Vector3(0, 0, (Math.random() - 0.5) * 0.02),
         swingOffset: Math.random() * Math.PI * 2,
         swingSpeed: 0.4 + Math.random() * 0.6,
+        type: 'heart' as any, // Mark as heart
       });
     }
 
@@ -387,11 +600,20 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
 
       // Update all falling objects
       fallingObjectsRef.current.forEach((obj) => {
+        // In heart mode: hide messages, show images and hearts (all continue falling)
+        // In normal mode: show everything
+        if (heartModeRef.current) {
+          obj.mesh.visible = obj.type !== 'message'; // Images and hearts visible
+        } else {
+          obj.mesh.visible = true; // All visible
+        }
+
+        // Continue animation for all objects (including images in heart mode)
         // Swing motion like snow
         const swingX = Math.sin(timeRef.current * obj.swingSpeed + obj.swingOffset) * 0.02;
         const swingZ = Math.cos(timeRef.current * obj.swingSpeed * 0.7 + obj.swingOffset) * 0.015;
 
-        // Update position
+        // Update position (images continue falling in heart mode)
         obj.mesh.position.x += obj.baseVelocity.x + swingX + windX;
         obj.mesh.position.y += obj.baseVelocity.y;
         obj.mesh.position.z += obj.baseVelocity.z + swingZ + windZ;
@@ -437,6 +659,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     return () => {
       
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('dblclick', handleDoubleClick);
       window.removeEventListener('resize', handleResize);
       
       if (animationIdRef.current !== null) {
