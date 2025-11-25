@@ -40,7 +40,7 @@ export const photos = [
   // '/images/emiu-8.png',
   // '/images/emiu-9.png',
   '/images/emiu-10.png',
-  '/images/emiu-11.png',
+  '/images/emiu-11.jpg',
   // '/images/emiu-12.png',
   // '/images/emiu-13.png',
   '/images/emiu-14.png',

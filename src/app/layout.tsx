@@ -14,7 +14,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Thanh Thuý 🎂 05/12/2002 💝",
-  description: "Thanh Thuý 🎂 05/12/2002 💝",
+  description: "Princess Birthday 💝",
+  openGraph: {
+    title: "Thanh Thuý 🎂 05/12/2002 💝",
+    description: "Princess Birthday 💝",
+    images: [
+      { url: "/images/emiu-18.jpg" },
+    ],
+  },
 };
 
 export default function RootLayout({

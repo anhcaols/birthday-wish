@@ -138,7 +138,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
 
       const sprite = new THREE.Sprite(material);
       // Fixed scale for consistent text size
-      const scale = 3.6;
+      const scale = 3;
       sprite.scale.set(scale * 8, scale * 2, 1);
 
       sprite.position.set(
@@ -173,8 +173,8 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     const textureLoader = new THREE.TextureLoader();
     
     // Fixed dimensions for all images - increased for better visibility
-    const fixedWidth = 8;  // Width in 3D units
-    const fixedHeight = 8; // Height in 3D units
+    const fixedWidth = 6;  // Width in 3D units
+    const fixedHeight = 6; // Height in 3D units
     const targetAspect = fixedWidth / fixedHeight; // Target aspect ratio
     const borderRadius = 12; // Border radius in pixels
     
@@ -286,7 +286,7 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     });
 
     // Create hearts
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 100; i++) {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       if (!context) continue;

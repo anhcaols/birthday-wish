@@ -24,15 +24,18 @@ export default function Birthday() {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <BirthdayScene messages={birthdayWishes} images={photos} />
-      {/* <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-        <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-linear-to-r from-pink-400 via-rose-500 to-pink-400 animate-pulse text-center whitespace-nowrap drop-shadow-2xl"
-            style={{
-              fontFamily: '"Brush Script MT", cursive',
-              textShadow: '0 0 30px rgba(255, 105, 180, 0.8), 0 0 60px rgba(255, 105, 180, 0.5)',
-            }}>
-          Happy Birthday! 🎂
-        </h1>
-      </div> */}
+      <div className="fixed top-0 left-0">
+        <img src="/images/gau-dau-2.webp" alt="Birthday" className="w-24 h-24 object-cover rounded-br-lg" />
+      </div>
+      <div className="fixed top-0 right-0">
+        <img src="/images/gau-dau-3.jpg" alt="Birthday" className="w-24 h-24 object-cover rounded-bl-lg" />
+      </div>
+      <div className="fixed bottom-0 left-0">
+        <img src="/images/gau-dau-1.webp" alt="Birthday" className="w-24 h-24 object-cover rounded-tr-lg" />
+      </div>
+      <div className="fixed bottom-0 right-0">
+        <img src="/images/gau-dau-4.webp" alt="Birthday" className="w-24 h-24 object-cover rounded-tl-lg" />
+      </div>
     </div>
   );
 }
