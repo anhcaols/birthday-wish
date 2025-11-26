@@ -384,13 +384,70 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
     const textureLoader = new THREE.TextureLoader();
     
     // Fixed dimensions for all images - increased for better visibility
-    const fixedWidth = 6;  // Width in 3D units
-    const fixedHeight = 6; // Height in 3D units
+    const fixedWidth = 8;  // Width in 3D units (increased from 6 to 8)
+    const fixedHeight = 8; // Height in 3D units (increased from 6 to 8)
     const targetAspect = fixedWidth / fixedHeight; // Target aspect ratio
     const borderRadius = 12; // Border radius in pixels
     
     images.forEach((imageSrc, index) => {
-      // Load image first
+      // Create placeholder canvas immediately
+      const placeholderCanvas = document.createElement('canvas');
+      const placeholderCtx = placeholderCanvas.getContext('2d');
+      if (!placeholderCtx) return;
+      
+      placeholderCanvas.width = 256;
+      placeholderCanvas.height = 256;
+      
+      // Draw a semi-transparent placeholder with loading indicator
+      placeholderCtx.fillStyle = 'rgba(255, 61, 107, 0.1)';
+      placeholderCtx.fillRect(0, 0, 256, 256);
+      placeholderCtx.strokeStyle = 'rgba(255, 61, 107, 0.3)';
+      placeholderCtx.lineWidth = 4;
+      placeholderCtx.strokeRect(4, 4, 248, 248);
+      
+      // Create texture from placeholder
+      const placeholderTexture = new THREE.CanvasTexture(placeholderCanvas);
+      const material = new THREE.SpriteMaterial({
+        map: placeholderTexture,
+        transparent: true,
+        opacity: 1,
+      });
+
+      const sprite = new THREE.Sprite(material);
+      
+      // Apply fixed dimensions
+      sprite.scale.set(fixedWidth, fixedHeight, 1);
+
+      // Random starting position
+      sprite.position.set(
+        (Math.random() - 0.5) * 70,
+        Math.random() * 90 + 10,
+        (Math.random() - 0.5) * 50
+      );
+
+      scene.add(sprite);
+
+      const baseVelocity = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.012,
+        -0.06 - Math.random() * 0.04,
+        (Math.random() - 0.5) * 0.012
+      );
+
+      fallingObjectsRef.current.push({
+        mesh: sprite,
+        velocity: baseVelocity.clone(),
+        baseVelocity: baseVelocity.clone(),
+        rotation: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.006,
+          (Math.random() - 0.5) * 0.006,
+          (Math.random() - 0.5) * 0.012
+        ),
+        swingOffset: Math.random() * Math.PI * 2,
+        swingSpeed: 0.4 + Math.random() * 0.4,
+        type: 'image' as any, // Mark as image
+      });
+      
+      // Now load the actual image and replace texture when ready
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
@@ -471,49 +528,16 @@ export default function BirthdayScene({ messages, images }: BirthdaySceneProps) 
         // Draw image with cover effect (adjusted for padding)
         ctx.drawImage(img, padding + drawX, padding + drawY, drawWidth, drawHeight);
 
-        // Create texture from canvas
+        // Create texture from canvas and update the sprite's material
         const texture = new THREE.CanvasTexture(canvas);
         texture.needsUpdate = true;
 
-        const material = new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          opacity: 1,
-        });
-
-        const sprite = new THREE.Sprite(material);
-        
-        // Apply fixed dimensions
-        sprite.scale.set(fixedWidth, fixedHeight, 1);
-
-          // Random starting position
-          sprite.position.set(
-            (Math.random() - 0.5) * 70,
-            Math.random() * 90 + 10,
-            (Math.random() - 0.5) * 50
-          );
-
-          scene.add(sprite);
-
-          const baseVelocity = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.012,
-            -0.06 - Math.random() * 0.04,
-            (Math.random() - 0.5) * 0.012
-          );
-
-          fallingObjectsRef.current.push({
-            mesh: sprite,
-            velocity: baseVelocity.clone(),
-            baseVelocity: baseVelocity.clone(),
-            rotation: new THREE.Vector3(
-              (Math.random() - 0.5) * 0.006,
-              (Math.random() - 0.5) * 0.006,
-              (Math.random() - 0.5) * 0.012
-            ),
-            swingOffset: Math.random() * Math.PI * 2,
-            swingSpeed: 0.4 + Math.random() * 0.4,
-            type: 'image' as any, // Mark as image
-          });
+        // Dispose old texture and update with new one
+        if (material.map) {
+          material.map.dispose();
+        }
+        material.map = texture;
+        material.needsUpdate = true;
       };
       
       img.onerror = (error) => {
